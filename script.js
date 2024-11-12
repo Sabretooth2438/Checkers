@@ -1,6 +1,10 @@
 /*-------------- Constants -------------*/
 // 5. Game Rules and Setup: Define board size (8x8), colors for each player (black and white), and normal vs. king pieces.
 const boardSize = 8
+const whitePiece = 'White'
+const blackPiece = 'Black'
+const normalPiece = 'normal'
+const kingPiece = 'king'
 /*---------- Variables (state) ---------*/
 // 1. Variables Needed: Set up variables to track the board layout, which player’s turn it is, and possible moves.
 let currentPlayer = 'White'

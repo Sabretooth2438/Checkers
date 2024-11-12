@@ -8,11 +8,11 @@ body {
 #board {
   display: flex;
   flex-wrap: wrap;
-  width: 500px; /* Adjust this based on the size of each square */
+  width: 500px;
 }
 
 .sqr {
-  width: 12%; /* 100% / 8 columns = 12.5% width for each square */
+  width: 12%;
   aspect-ratio: 1 / 1;
   border: 1px solid black;
   font-size: 64px;

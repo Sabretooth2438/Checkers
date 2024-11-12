@@ -5,9 +5,13 @@ const whitePiece = 'White'
 const blackPiece = 'Black'
 const normalPiece = 'normal'
 const kingPiece = 'king'
+const blackPieceRows = [0, 1, 2]
+const whitePieceRows = [5, 6, 7]
+
 /*---------- Variables (state) ---------*/
 // 1. Variables Needed: Set up variables to track the board layout, which player’s turn it is, and possible moves.
 let currentPlayer = 'White'
+let boardArray = Array(boardSize * boardSize).fill(null)
 /*----- Cached Element References  -----*/
 // 2. Main Elements on Page: Link to the main game area, turn display, messages, and restart button.
 const boardEle = document.getElementById('board')
@@ -24,6 +28,28 @@ const createBoard = () => {
   }
 }
 
+const initializeBoard = () => {
+  blackPieceRows.foreach((row) => {
+    for (let col = 0; col < boardSize; col += 2) {
+      let startingCol = col
+      if (row % 2 === 0) {
+        startingCol = col + 1
+      }
+      const index = row * boardSize + startingCol
+      boardArray[index] = { color: blackPiece, type: normalPiece }
+    }
+  })
+
+  whitePieceRows.forEach((row) => {
+    for (let col = 0; col < boardSize; col += 2) {
+      if (row % 2 === 0) {
+        startingCol = col + 1
+      }
+      const index = row * boardSize + startingCol
+      boardArray[index] = { color: whitePiece, type: normalPiece }
+    }
+  })
+}
 // 4. How the Game Looks: Show the pieces in their places and display whose turn it is.
 
 // 6. Piece Clicks: When a player clicks a piece, check if it’s their turn and show possible moves.
@@ -42,4 +68,7 @@ const createBoard = () => {
 
 /*----------- Event Listeners ----------*/
 // 13. Add event listeners for piece clicks, square clicks, and the reset button
-document.addEventListener('DOMContentLoaded', createBoard)
+document.addEventListener('DOMContentLoaded', () => {
+  createBoard()
+  initializeBoard()
+})

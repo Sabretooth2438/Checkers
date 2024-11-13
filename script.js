@@ -23,13 +23,23 @@ const createBoard = () => {
   for (let i = 0; i < boardSize * boardSize; i++) {
     const square = document.createElement('div')
     square.classList.add('sqr')
+
+    const row = Math.floor(i / boardSize)
+    const col = i % boardSize
+
+    if ((row + col) % 2 === 0) {
+      square.classList.add('white')
+    } else {
+      square.classList.add('black')
+    }
+
     square.id = i
     boardEle.appendChild(square)
   }
 }
 
 const initializeBoard = () => {
-  blackPieceRows.foreach((row) => {
+  blackPieceRows.forEach((row) => {
     for (let col = 0; col < boardSize; col += 2) {
       let startingCol = col
       if (row % 2 === 0) {
@@ -42,6 +52,7 @@ const initializeBoard = () => {
 
   whitePieceRows.forEach((row) => {
     for (let col = 0; col < boardSize; col += 2) {
+      let startingCol = col
       if (row % 2 === 0) {
         startingCol = col + 1
       }
@@ -49,6 +60,26 @@ const initializeBoard = () => {
       boardArray[index] = { color: whitePiece, type: normalPiece }
     }
   })
+}
+
+const displayPieces = () => {
+  boardArray.forEach((piece, index) => {
+    if (piece) {
+      const square = document.getElementById(index)
+      const pieceElement = document.createElement('div')
+      if (piece.color === blackPiece) {
+        pieceElement.classList.add('blackPiece')
+      } else if (piece.color === whitePiece) {
+        pieceElement.classList.add('whitePiece')
+      }
+      square.appendChild(pieceElement)
+    }
+  })
+}
+
+const updateTurnMessage = () => {
+  const messageElement = document.getElementById('Message')
+  messageElement.textContent = `Current Turn: ${currentPlayer}`
 }
 // 4. How the Game Looks: Show the pieces in their places and display whose turn it is.
 
@@ -71,4 +102,5 @@ const initializeBoard = () => {
 document.addEventListener('DOMContentLoaded', () => {
   createBoard()
   initializeBoard()
+  displayPieces()
 })

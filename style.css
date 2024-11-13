@@ -1,6 +1,5 @@
 body {
   background-color: gainsboro;
-  /* Use a system font, if none are available use an available sans-sarif */
   font-family: system-ui, sans-serif;
   margin: 0;
 }
@@ -11,10 +10,37 @@ body {
   width: 500px;
 }
 
+:root {
+  --piece-size: 80%;
+}
+
 .sqr {
   width: 12%;
   aspect-ratio: 1 / 1;
   border: 1px solid black;
-  font-size: 64px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.sqr.black {
+  background-color: black;
+}
+
+.sqr.white {
+  background-color: white;
+}
+
+.blackPiece,
+.whitePiece {
+  background-color: black;
+  border: 3px solid red;
+  border-radius: 50%;
+  width: var(--piece-size);
+  height: var(--piece-size);
+}
+
+.whitePiece {
+  background-color: white;
 }

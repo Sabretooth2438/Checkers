@@ -13,6 +13,7 @@ const whitePieceRows = [5, 6, 7]
 let currentPlayer = 'White'
 let boardArray = Array(boardSize * boardSize).fill(null)
 let selectedPieceIndex = null
+let direction
 /*----- Cached Element References  -----*/
 // 2. Main Elements on Page: Link to the main game area, turn display, messages, and restart button.
 const boardEle = document.getElementById('board')
@@ -109,13 +110,74 @@ const deselectPiece = () => {
     square.classList.remove('validMove')
     square.replaceWith(square.cloneNode(true))
   })
+  selectedPieceIndex = null
 }
 // 7. Find Valid Moves: Calculate where each piece can move, depending on the type (normal or king).
+const isValidSquare = (index) => {
+  return (
+    index >= 0 && index < boardSize * boardSize && boardArray[index] === null
+  )
+}
 
+const calculateValidMoves = (index, piece) => {
+  const validMoves = []
+  if (piece.color === whitePiece) {
+    direction = -1
+  } else {
+    direction = 1
+  }
+
+  const leftDiagonal = index + direction * (boardSize - 1)
+  const rightDiagonal = index + direction * (boardSize + 1)
+
+  if (isValidSquare(leftDiagonal)) {
+    validMoves.push(leftDiagonal)
+  }
+  if (isValidSquare(rightDiagonal)) {
+    validMoves.push(rightDiagonal)
+  }
+
+  return validMoves
+}
+
+const promoteToKing = (index) => {
+  const piece = boardArray[index]
+  if (
+    (piece.color === blackPiece && Math.floor(index / boardSize) === 7) ||
+    (piece.color === whitePiece && Math.floor(index / boardSize) === 0)
+  ) {
+    piece.type = kingPiece
+  }
+}
 // 8. Click on a Square to Move: Move the piece if the player clicks a valid square, removing any captured pieces.
+const highlightValidMoves = () => {
+  const piece = boardArray[index]
+  const validMoves = calculateValidMoves(index, piece)
 
+  validMoves.forEach((moveIndex) => {
+    const square = document.getElementById(moveIndex)
+    square.classList.add('ValidMove')
+    square.addEventListener('click', () => moviePiece(moveIndex))
+  })
+}
+
+const refreshListners = () => {
+  document.querySelectorAll('.sqr').forEach((square) => {
+    const clone = square.cloneNode(true)
+    square.replaceWith(clone)
+  })
+  addPieceClickListeners()
+}
 // 9. Turn Change: Switch to the next player, clear highlights, and update the display.
-
+const switchTurn = () => {
+  if (currentPlayer === 'White') {
+    currentPlayer = 'Black'
+  } else {
+    currentPlayer = 'White'
+  }
+  updateTurnMessage()
+  refreshListners()
+}
 // 10. Check for Win/Loss: If a player has no moves or pieces left, announce the winner; otherwise, continue turns.
 
 // 11. Restart the Game: Reset everything to start a new game when the player clicks the reset button.
@@ -133,19 +195,9 @@ const addPieceClickListeners = () => {
   })
 }
 
-const highlightValidMoves = () => {
-  const piece = boardArray[index]
-  const validMoves = calculateValidMoves(index, piece)
-
-  validMoves.forEach((moveIndex) => {
-    const square = document.getElementById(moveIndex)
-    square.classList.add('ValidMove')
-    square.addEventListener('click', () => moviePiece(moveIndex))
-  })
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   createBoard()
   initializeBoard()
   displayPieces()
+  addPieceClickListeners()
 })

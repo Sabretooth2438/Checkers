@@ -48,3 +48,11 @@ body {
 .whitePiece {
   background-color: white;
 }
+
+.selected {
+  outline: 2px solid yellow;
+}
+
+.validMove {
+  background-color: green;
+}

@@ -1,5 +1,4 @@
 /*-------------- Constants -------------*/
-// 5. Game Rules and Setup: Define board size (8x8), colors for each player (black and white), and normal vs. king pieces.
 const boardSize = 8
 const whitePiece = 'White'
 const blackPiece = 'Black'
@@ -9,19 +8,15 @@ const blackPieceRows = [0, 1, 2]
 const whitePieceRows = [5, 6, 7]
 
 /*---------- Variables (state) ---------*/
-// 1. Variables Needed: Set up variables to track the board layout, which player’s turn it is, and possible moves.
 let currentPlayer = 'White'
 let boardArray = Array(boardSize * boardSize).fill(null)
 let selectedPieceIndex = null
 let direction
 /*----- Cached Element References  -----*/
-// 2. Main Elements on Page: Link to the main game area, turn display, messages, and restart button.
 const boardEle = document.getElementById('board')
 const restartEle = document.getElementById('restart')
 
 /*-------------- Functions -------------*/
-// 3. Set Up the Game at Start: Load the board, pieces, and show whose turn it is.
-// 4. How the Game Looks: Show the pieces in their places and display whose turn it is.
 const createBoard = () => {
   for (let i = 0; i < boardSize * boardSize; i++) {
     const square = document.createElement('div')
@@ -80,12 +75,15 @@ const displayPieces = () => {
   })
 }
 
-const updateTurnMessage = () => {
+const updateTurnMessage = (message = null) => {
   const messageElement = document.getElementById('Message')
-  messageElement.textContent = `Current Turn: ${currentPlayer}`
+  if (message) {
+    messageElement.textContent = message
+  } else {
+    messageElement.textContent = `${currentPlayer}'s Turn`
+  }
 }
 
-// 6. Piece Clicks: When a player clicks a piece, check if it’s their turn and show possible moves.
 const selectPiece = (index) => {
   if (selectedPieceIndex === index) {
     deselectPiece()
@@ -112,7 +110,7 @@ const deselectPiece = () => {
   })
   selectedPieceIndex = null
 }
-// 7. Find Valid Moves: Calculate where each piece can move, depending on the type (normal or king).
+
 const isValidSquare = (index) => {
   return (
     index >= 0 && index < boardSize * boardSize && boardArray[index] === null
@@ -149,26 +147,36 @@ const promoteToKing = (index) => {
     piece.type = kingPiece
   }
 }
-// 8. Click on a Square to Move: Move the piece if the player clicks a valid square, removing any captured pieces.
-const highlightValidMoves = () => {
+
+const movePiece = (toIndex) => {
+  boardArray[toIndex] = boardArray[selectedPieceIndex]
+  boardArray[selectedPieceIndex] = null
+  deselectPiece()
+  promoteToKing(toIndex)
+  switchTurn()
+  checkWinCondition()
+  displayPieces()
+}
+
+const highlightValidMoves = (index) => {
   const piece = boardArray[index]
   const validMoves = calculateValidMoves(index, piece)
 
   validMoves.forEach((moveIndex) => {
     const square = document.getElementById(moveIndex)
-    square.classList.add('ValidMove')
-    square.addEventListener('click', () => moviePiece(moveIndex))
+    square.classList.add('validMove')
+    square.addEventListener('click', () => movePiece(moveIndex))
   })
 }
 
-const refreshListners = () => {
+const refreshListeners = () => {
   document.querySelectorAll('.sqr').forEach((square) => {
     const clone = square.cloneNode(true)
     square.replaceWith(clone)
   })
   addPieceClickListeners()
 }
-// 9. Turn Change: Switch to the next player, clear highlights, and update the display.
+
 const switchTurn = () => {
   if (currentPlayer === 'White') {
     currentPlayer = 'Black'
@@ -176,13 +184,40 @@ const switchTurn = () => {
     currentPlayer = 'White'
   }
   updateTurnMessage()
-  refreshListners()
+  refreshListeners()
 }
-// 10. Check for Win/Loss: If a player has no moves or pieces left, announce the winner; otherwise, continue turns.
 
-// 11. Restart the Game: Reset everything to start a new game when the player clicks the reset button.
+const disableListeners = () => {
+  document.querySelectorAll('.sqr').forEach((square) => {
+    const clone = square.cloneNode(true)
+    square.replaceWith(clone)
+  })
+}
 
-// 12. Improve Display and Accessibility: Make sure the colors are easy to see, messages are clear, and pieces have labels for accessibility.
+const checkWinCondition = () => {
+  let whitePieces = 0
+  let blackPieces = 0
+
+  for (let i = 0; i < boardArray.length; i++) {
+    const piece = boardArray[i]
+    if (piece) {
+      if (piece.color === whitePiece) {
+        whitePieces++
+      } else if (piece.color === blackPiece) {
+        blackPieces++
+      }
+    }
+  }
+
+  const messageElement = document.getElementById('Message')
+  if (whitePieces === 0) {
+    messageElement.textContent = 'Black Wins!'
+    disableListeners()
+  } else if (blackPieces === 0) {
+    messageElement.textContent = 'White Wins!'
+    disableListeners()
+  }
+}
 
 /*----------- Event Listeners ----------*/
 // 13. Add event listeners for piece clicks, square clicks, and the reset button
@@ -199,5 +234,17 @@ document.addEventListener('DOMContentLoaded', () => {
   createBoard()
   initializeBoard()
   displayPieces()
+  updateTurnMessage()
+  addPieceClickListeners()
+})
+
+restartEle.addEventListener('click', () => {
+  boardArray = Array(boardSize * boardSize).fill(null)
+  selectedPieceIndex = null
+  currentPlayer = 'White'
+  createBoard()
+  initializeBoard()
+  displayPieces()
+  updateTurnMessage()
   addPieceClickListeners()
 })

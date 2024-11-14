@@ -72,11 +72,16 @@ const displayPieces = () => {
 
     if (piece) {
       const pieceElement = document.createElement('div')
+
       if (piece.color === blackPiece) {
         pieceElement.classList.add('blackPiece')
       } else if (piece.color === whitePiece) {
         pieceElement.classList.add('whitePiece')
       }
+      if (piece.type === kingPiece) {
+        pieceElement.classList.add('king')
+      }
+
       square.appendChild(pieceElement)
     }
   })
@@ -85,30 +90,23 @@ const displayPieces = () => {
 // Calculate Valid Moves
 const calculateValidMoves = (index, piece) => {
   const validMoves = []
+  let directions
+
   if (piece.type === kingPiece) {
-    const directions = [-1, 1]
-    for (let dir of directions) {
-      const leftDiagonal = index + dir * (boardSize - 1)
-      const rightDiagonal = index + dir * (boardSize + 1)
-
-      if (isValidSquare(leftDiagonal)) {
-        validMoves.push(leftDiagonal)
-      }
-      if (isValidSquare(rightDiagonal)) {
-        validMoves.push(rightDiagonal)
-      }
-    }
+    directions = [-1, 1]
   } else {
-    let direction
     if (piece.color === whitePiece) {
-      direction = -1
+      directions = [-1]
     } else {
-      direction = 1
+      directions = [1]
     }
+  }
 
-    const leftDiagonal = index + direction * (boardSize - 1)
-    const rightDiagonal = index + direction * (boardSize + 1)
+  directions.forEach((dir) => {
+    const leftDiagonal = index + dir * (boardSize - 1)
+    const rightDiagonal = index + dir * (boardSize + 1)
 
+    // Normal Moves
     if (isValidSquare(leftDiagonal)) {
       validMoves.push(leftDiagonal)
     }
@@ -116,8 +114,10 @@ const calculateValidMoves = (index, piece) => {
       validMoves.push(rightDiagonal)
     }
 
-    const jumpLeft = index + direction * 2 * (boardSize - 1)
-    const jumpRight = index + direction * 2 * (boardSize + 1)
+    // Jump Moves
+    const jumpLeft = index + dir * 2 * (boardSize - 1)
+    const jumpRight = index + dir * 2 * (boardSize + 1)
+
     if (isValidSquare(jumpLeft)) {
       const middleIndex = (index + jumpLeft) / 2
       if (
@@ -137,7 +137,7 @@ const calculateValidMoves = (index, piece) => {
         validMoves.push(jumpRight)
       }
     }
-  }
+  })
 
   return validMoves
 }
@@ -164,6 +164,7 @@ const movePiece = (toIndex) => {
   ) {
     capturePiece(selectedPieceIndex, toIndex)
   }
+
   boardArray[toIndex] = boardArray[selectedPieceIndex]
   boardArray[selectedPieceIndex] = null
   deselectPiece()

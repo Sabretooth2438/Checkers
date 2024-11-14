@@ -39,7 +39,7 @@ body {
 .blackPiece,
 .whitePiece {
   background-color: black;
-  border: 3px solid red;
+  border: 2px solid red;
   border-radius: 50%;
   width: var(--piece-size);
   height: var(--piece-size);
@@ -55,4 +55,9 @@ body {
 
 .validMove {
   background-color: green;
+}
+
+.blackPiece.King,
+.whitePiece.King {
+  border: 2px solid gold;
 }

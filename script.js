@@ -147,7 +147,20 @@ const highlightValidMoves = (index) => {
   const piece = boardArray[index]
   const validMoves = calculateValidMoves(index, piece)
 
-  validMoves.forEach((moveIndex) => {
+  const hasJumps = validMoves.some((move) => {
+    return Math.abs(move - index) > boardSize
+  })
+
+  let movesToHighlight
+  if (hasJumps) {
+    movesToHighlight = validMoves.filter((move) => {
+      return Math.abs(move - index) > boardSize
+    })
+  } else {
+    movesToHighlight = validMoves
+  }
+
+  movesToHighlight.forEach((moveIndex) => {
     const square = document.getElementById(moveIndex)
     square.classList.add('validMove')
     square.addEventListener('click', () => movePiece(moveIndex))
@@ -167,10 +180,25 @@ const movePiece = (toIndex) => {
 
   boardArray[toIndex] = boardArray[selectedPieceIndex]
   boardArray[selectedPieceIndex] = null
-  deselectPiece()
+
   promoteToKing(toIndex)
-  switchTurn()
-  checkWinCondition()
+
+  const piece = boardArray[toIndex]
+  const validMoves = calculateValidMoves(toIndex, piece)
+  const validJumps = validMoves.filter((move) => {
+    Math.abs(move - toIndex) > boardSize
+  })
+
+  if (validJumps.length > 0) {
+    selectedPieceIndex = toIndex
+    deselectPiece()
+    highlightValidMoves(toIndex)
+  } else {
+    deselectPiece()
+    switchTurn()
+    checkWinCondition()
+  }
+
   displayPieces()
   refreshListeners()
 }

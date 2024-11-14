@@ -1,5 +1,4 @@
 /*-------------- Constants -------------*/
-// Define board size, piece types, and player colors.
 const boardSize = 8
 const whitePiece = 'White'
 const blackPiece = 'Black'
@@ -7,20 +6,17 @@ const normalPiece = 'normal'
 const kingPiece = 'king'
 
 /*---------- Variables (state) ---------*/
-// Track the game state: current player, board layout, and selected piece.
 let currentPlayer = 'White'
 let boardArray = Array(boardSize * boardSize).fill(null)
 let selectedPieceIndex = null
 
 /*----- Cached Element References  -----*/
-// Link to DOM elements for the board, message, and restart button.
 const boardEle = document.getElementById('board')
 const restartEle = document.getElementById('restart')
 const messageEle = document.getElementById('Message')
 
 /*-------------- Functions -------------*/
-
-// Create the visual board layout.
+// Create Board
 const createBoard = () => {
   for (let i = 0; i < boardSize * boardSize; i++) {
     const square = document.createElement('div')
@@ -38,10 +34,9 @@ const createBoard = () => {
     square.id = i
     boardEle.appendChild(square)
   }
-  return
 }
 
-// Initialize the board state with pieces in starting positions.
+// Initialize the Board with Pieces
 const initializeBoard = () => {
   const blackPieceRows = [0, 1, 2]
   const whitePieceRows = [5, 6, 7]
@@ -67,14 +62,13 @@ const initializeBoard = () => {
       boardArray[index] = { color: whitePiece, type: normalPiece }
     }
   })
-  return
 }
 
-// Display pieces on the board based on the game state.
+// Display pieces and Clear it
 const displayPieces = () => {
   boardArray.forEach((piece, index) => {
     const square = document.getElementById(index)
-    square.innerHTML = '' // Clear previous pieces
+    square.innerHTML = ''
 
     if (piece) {
       const pieceElement = document.createElement('div')
@@ -86,10 +80,9 @@ const displayPieces = () => {
       square.appendChild(pieceElement)
     }
   })
-  return
 }
 
-// Calculate valid moves for a selected piece.
+// Calculate Valid Moves
 const calculateValidMoves = (index, piece) => {
   const validMoves = []
   if (piece.type === kingPiece) {
@@ -122,12 +115,34 @@ const calculateValidMoves = (index, piece) => {
     if (isValidSquare(rightDiagonal)) {
       validMoves.push(rightDiagonal)
     }
+
+    const jumpLeft = index + direction * 2 * (boardSize - 1)
+    const jumpRight = index + direction * 2 * (boardSize + 1)
+    if (isValidSquare(jumpLeft)) {
+      const middleIndex = (index + jumpLeft) / 2
+      if (
+        boardArray[middleIndex] &&
+        boardArray[middleIndex].color !== currentPlayer
+      ) {
+        validMoves.push(jumpLeft)
+      }
+    }
+
+    if (isValidSquare(jumpRight)) {
+      const middleIndex = (index + jumpRight) / 2
+      if (
+        boardArray[middleIndex] &&
+        boardArray[middleIndex].color !== currentPlayer
+      ) {
+        validMoves.push(jumpRight)
+      }
+    }
   }
 
   return validMoves
 }
 
-// Highlight valid moves for a selected piece.
+// Highlight Valid Moves
 const highlightValidMoves = (index) => {
   const piece = boardArray[index]
   const validMoves = calculateValidMoves(index, piece)
@@ -137,11 +152,18 @@ const highlightValidMoves = (index) => {
     square.classList.add('validMove')
     square.addEventListener('click', () => movePiece(moveIndex))
   })
-  return
 }
 
-// Move a piece to a new square.
+// Move a Piece
 const movePiece = (toIndex) => {
+  const jumpDistance = Math.abs(toIndex - selectedPieceIndex)
+
+  if (
+    jumpDistance === 2 * (boardSize - 1) ||
+    jumpDistance === 2 * (boardSize + 1)
+  ) {
+    capturePiece(selectedPieceIndex, toIndex)
+  }
   boardArray[toIndex] = boardArray[selectedPieceIndex]
   boardArray[selectedPieceIndex] = null
   deselectPiece()
@@ -150,10 +172,22 @@ const movePiece = (toIndex) => {
   checkWinCondition()
   displayPieces()
   refreshListeners()
-  return
 }
 
-// Promote a piece to king if it reaches the opposite side.
+// Capture pieces
+const capturePiece = (fromIndex, toIndex) => {
+  const capturedIndex = (fromIndex + toIndex) / 2
+  if (
+    boardArray[capturedIndex] &&
+    boardArray[capturedIndex].color !== currentPlayer
+  ) {
+    boardArray[capturedIndex] = null
+    const square = document.getElementById(capturedIndex)
+    square.innerHTML = ''
+  }
+}
+
+// Promotion
 const promoteToKing = (index) => {
   const piece = boardArray[index]
   if (
@@ -162,10 +196,9 @@ const promoteToKing = (index) => {
   ) {
     piece.type = kingPiece
   }
-  return
 }
 
-// Check if a square index is valid and empty.
+// Checking square index is valid and empty.
 const isValidSquare = (index) => {
   if (
     index >= 0 &&
@@ -177,7 +210,7 @@ const isValidSquare = (index) => {
   return false
 }
 
-// Deselect the currently selected piece.
+// Deselect Current Piece
 const deselectPiece = () => {
   const square = document.getElementById(selectedPieceIndex)
   if (square) {
@@ -190,10 +223,9 @@ const deselectPiece = () => {
   })
 
   selectedPieceIndex = null
-  return
 }
 
-// Switch to the next player's turn.
+// Switch Player
 const switchTurn = () => {
   if (currentPlayer === 'White') {
     currentPlayer = 'Black'
@@ -201,20 +233,18 @@ const switchTurn = () => {
     currentPlayer = 'White'
   }
   updateTurnMessage()
-  return
 }
 
-// Update the turn or win message.
+// Win Message
 const updateTurnMessage = (message = null) => {
   if (message) {
     messageEle.textContent = message
   } else {
     messageEle.textContent = `${currentPlayer}'s Turn`
   }
-  return
 }
 
-// Check if a player has won the game.
+// Check Win Game
 const checkWinCondition = () => {
   let whitePieces = 0
   let blackPieces = 0
@@ -236,29 +266,26 @@ const checkWinCondition = () => {
     updateTurnMessage('White Wins!')
     disableListeners()
   }
-  return
 }
 
-// Disable all event listeners on the board.
+// Disable all event listeners
 const disableListeners = () => {
   document.querySelectorAll('.sqr').forEach((square) => {
     const clone = square.cloneNode(true)
     square.replaceWith(clone)
   })
-  return
 }
 
-// Refresh event listeners after each turn.
+// Refreshing event listeners after turn.
 const refreshListeners = () => {
   document.querySelectorAll('.sqr').forEach((square) => {
     const clone = square.cloneNode(true)
     square.replaceWith(clone)
   })
   addPieceClickListeners()
-  return
 }
 
-// Add click listeners to all pieces of the current player.
+// Add click listeners
 const addPieceClickListeners = () => {
   boardArray.forEach((piece, index) => {
     if (piece && piece.color === currentPlayer) {
@@ -266,14 +293,12 @@ const addPieceClickListeners = () => {
       square.addEventListener('click', () => selectPiece(index))
     }
   })
-  return
 }
 
-// Handle piece selection.
+// Piece selection.
 const selectPiece = (index) => {
   if (selectedPieceIndex === index) {
     deselectPiece()
-    return
   }
   if (selectedPieceIndex !== null) {
     deselectPiece()
@@ -282,21 +307,19 @@ const selectPiece = (index) => {
   const square = document.getElementById(index)
   square.classList.add('selected')
   highlightValidMoves(index)
-  return
 }
 
 /*----------- Event Listeners ----------*/
-// Initialize the game when the DOM is fully loaded.
+// Initialize the game
 document.addEventListener('DOMContentLoaded', () => {
   createBoard()
   initializeBoard()
   displayPieces()
   addPieceClickListeners()
   updateTurnMessage()
-  return
 })
 
-// Restart the game when the restart button is clicked.
+// Restart the game
 restartEle.addEventListener('click', () => {
   boardArray = Array(boardSize * boardSize).fill(null)
   selectedPieceIndex = null
@@ -307,5 +330,4 @@ restartEle.addEventListener('click', () => {
   displayPieces()
   updateTurnMessage()
   refreshListeners()
-  return
 })

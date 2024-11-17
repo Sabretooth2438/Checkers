@@ -102,35 +102,39 @@ const findValidMoves = (index, piece) => {
     }
   }
 
+  const row = Math.floor(index / boardSize)
+
   directions.forEach((dir) => {
     const leftMove = index + dir * (boardSize - 1)
     const rightMove = index + dir * (boardSize + 1)
 
-    if (isValidSpace(leftMove)) {
+    const leftMoveRow = Math.floor(leftMove / boardSize)
+    const rightMoveRow = Math.floor(rightMove / boardSize)
+
+    if (isValidSpace(leftMove) && Math.abs(leftMoveRow - row) === 1) {
       validMoves.push(leftMove)
     }
-    if (isValidSpace(rightMove)) {
+    if (isValidSpace(rightMove) && Math.abs(rightMoveRow - row) === 1) {
       validMoves.push(rightMove)
     }
 
     const jumpLeft = index + dir * 2 * (boardSize - 1)
     const jumpRight = index + dir * 2 * (boardSize + 1)
 
-    if (isValidSpace(jumpLeft)) {
+    const jumpLeftRow = Math.floor(jumpLeft / boardSize)
+    const jumpRightRow = Math.floor(jumpRight / boardSize)
+
+    if (isValidSpace(jumpLeft) && Math.abs(jumpLeftRow - row) === 2) {
       const midPoint = (index + jumpLeft) / 2
-      if (board[midPoint]) {
-        if (board[midPoint].color !== currentPlayer) {
-          validMoves.push(jumpLeft)
-        }
+      if (board[midPoint] && board[midPoint].color !== currentPlayer) {
+        validMoves.push(jumpLeft)
       }
     }
 
-    if (isValidSpace(jumpRight)) {
+    if (isValidSpace(jumpRight) && Math.abs(jumpRightRow - row) === 2) {
       const midPoint = (index + jumpRight) / 2
-      if (board[midPoint]) {
-        if (board[midPoint].color !== currentPlayer) {
-          validMoves.push(jumpRight)
-        }
+      if (board[midPoint] && board[midPoint].color !== currentPlayer) {
+        validMoves.push(jumpRight)
       }
     }
   })
@@ -166,9 +170,12 @@ const movePiece = (toIndex) => {
   clearSelection()
   checkForKing(toIndex)
   switchPlayer()
-  checkWinner()
   renderBoard()
   resetListeners()
+
+  if (!checkWinner()) {
+    updateMessage()
+  }
 }
 
 // Removes captured piece
@@ -215,6 +222,21 @@ const clearSelection = () => {
   selectedPiece = null
 }
 
+// Checks if any piece has valid moves
+const hasValidMoves = () => {
+  let hasMoves = false
+
+  board.forEach((piece, index) => {
+    if (piece && piece.color === currentPlayer) {
+      const moves = findValidMoves(index, piece)
+      if (moves.length > 0) {
+        hasMoves = true
+      }
+    }
+  })
+  return hasMoves
+}
+
 // Changes active player
 const switchPlayer = () => {
   if (currentPlayer === 'White') {
@@ -232,26 +254,41 @@ const updateMessage = (message = null) => {
 
 // Checks for winner
 const checkWinner = () => {
-  let whitePieces = 0
-  let blackPieces = 0
+  let whiteCount = 0
+  let blackCount = 0
 
   board.forEach((piece) => {
     if (piece) {
       if (piece.color === whitePiece) {
-        whitePieces++
+        whiteCount++
       } else if (piece.color === blackPiece) {
-        blackPieces++
+        blackCount++
       }
     }
   })
 
-  if (whitePieces === 0) {
+  if (whiteCount === 0) {
     updateMessage('Black Wins!')
     freezeBoard()
-  } else if (blackPieces === 0) {
+    return true
+  } else if (blackCount === 0) {
     updateMessage('White Wins!')
     freezeBoard()
+    return true
   }
+
+  if (!hasValidMoves()) {
+    let winner
+    if (currentPlayer === whitePiece) {
+      winner = 'Black'
+    } else {
+      winner = 'White'
+    }
+    updateMessage(`${winner} Wins! - No moves left for ${currentPlayer}`)
+    freezeBoard()
+    return true
+  }
+  return false
 }
 
 // Stops all moves

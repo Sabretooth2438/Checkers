@@ -4,11 +4,16 @@ const whitePiece = 'White'
 const blackPiece = 'Black'
 const normalPiece = 'normal'
 const kingPiece = 'king'
+const eventHandlers = {
+  moveHandlers: {},
+  pieceHandlers: {}
+}
 
 /*---------- Variables (state) ---------*/
 let currentPlayer = 'White'
 let board = Array(boardSize * boardSize).fill(null)
 let selectedPiece = null
+let continuedJump = false
 
 /*----- Cached Element References  -----*/
 const boardEle = document.getElementById('board')
@@ -107,39 +112,76 @@ const findValidMoves = (index, piece) => {
   directions.forEach((dir) => {
     const leftMove = index + dir * (boardSize - 1)
     const rightMove = index + dir * (boardSize + 1)
-
     const leftMoveRow = Math.floor(leftMove / boardSize)
     const rightMoveRow = Math.floor(rightMove / boardSize)
 
-    if (isValidSpace(leftMove) && Math.abs(leftMoveRow - row) === 1) {
-      validMoves.push(leftMove)
-    }
-    if (isValidSpace(rightMove) && Math.abs(rightMoveRow - row) === 1) {
-      validMoves.push(rightMove)
+    if (!continuedJump) {
+      if (isValidSpace(leftMove) && Math.abs(leftMoveRow - row) === 1) {
+        validMoves.push(leftMove)
+      }
+      if (isValidSpace(rightMove) && Math.abs(rightMoveRow - row) === 1) {
+        validMoves.push(rightMove)
+      }
     }
 
+    // Jump moves
     const jumpLeft = index + dir * 2 * (boardSize - 1)
     const jumpRight = index + dir * 2 * (boardSize + 1)
-
     const jumpLeftRow = Math.floor(jumpLeft / boardSize)
     const jumpRightRow = Math.floor(jumpRight / boardSize)
 
     if (isValidSpace(jumpLeft) && Math.abs(jumpLeftRow - row) === 2) {
       const midPoint = (index + jumpLeft) / 2
-      if (board[midPoint] && board[midPoint].color !== currentPlayer) {
+      if (board[midPoint] && board[midPoint].color !== piece.color) {
         validMoves.push(jumpLeft)
       }
     }
 
     if (isValidSpace(jumpRight) && Math.abs(jumpRightRow - row) === 2) {
       const midPoint = (index + jumpRight) / 2
-      if (board[midPoint] && board[midPoint].color !== currentPlayer) {
+      if (board[midPoint] && board[midPoint].color !== piece.color) {
         validMoves.push(jumpRight)
       }
     }
   })
 
   return validMoves
+}
+
+// Check for available jumps
+const checkForJumps = () => {
+  for (let i = 0; i < board.length; i++) {
+    const piece = board[i]
+    if (piece && piece.color === currentPlayer) {
+      // Temporarily save and reset continuedJump to check for jumps
+      const savedContinuedJump = continuedJump
+      continuedJump = false
+      const moves = findValidMoves(i, piece)
+      continuedJump = savedContinuedJump
+
+      const hasJump = moves.some(
+        (moveIndex) =>
+          Math.abs(moveIndex - i) === 2 * (boardSize - 1) ||
+          Math.abs(moveIndex - i) === 2 * (boardSize + 1)
+      )
+
+      if (hasJump) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
+const isJumpMove = (fromIndex, toIndex) => {
+  const delta = toIndex - fromIndex
+  const possibleDeltas = [
+    2 * (boardSize - 1),
+    2 * (boardSize + 1),
+    -2 * (boardSize - 1),
+    -2 * (boardSize + 1)
+  ]
+  return possibleDeltas.includes(delta)
 }
 
 // Shows possible moves
@@ -150,28 +192,49 @@ const showMoves = (index) => {
   validMoves.forEach((moveIndex) => {
     const square = document.getElementById(moveIndex)
     square.classList.add('validMove')
-    square.addEventListener('click', () => movePiece(moveIndex))
+    function handleMoveClick() {
+      movePiece(moveIndex)
+    }
+    eventHandlers.moveHandlers[moveIndex] = handleMoveClick
+    square.addEventListener('click', handleMoveClick)
   })
 }
 
 // Handles piece movement
 const movePiece = (toIndex) => {
-  const jumpDistance = Math.abs(toIndex - selectedPiece)
+  const isJump = isJumpMove(selectedPiece, toIndex)
 
-  if (
-    jumpDistance === 2 * (boardSize - 1) ||
-    jumpDistance === 2 * (boardSize + 1)
-  ) {
+  if (isJump) {
     capturePiece(selectedPiece, toIndex)
   }
 
-  board[toIndex] = board[selectedPiece]
+  const movingPiece = board[selectedPiece]
   board[selectedPiece] = null
+  board[toIndex] = movingPiece
+
   clearSelection()
-  checkForKing(toIndex)
-  switchPlayer()
+
+  const moreJumps = isJump
+    ? findValidMoves(toIndex, board[toIndex]).some((move) =>
+        isJumpMove(toIndex, move)
+      )
+    : false
+
   renderBoard()
-  resetListeners()
+
+  if (moreJumps) {
+    continuedJump = true
+    selectedPiece = toIndex
+    const square = document.getElementById(toIndex)
+    square.classList.add('selected')
+    showMoves(toIndex)
+  } else {
+    continuedJump = false
+    selectedPiece = null
+    checkForKing(toIndex)
+    switchPlayer()
+    resetListeners()
+  }
 
   if (!checkWinner()) {
     updateMessage()
@@ -216,10 +279,17 @@ const clearSelection = () => {
 
   document.querySelectorAll('.validMove').forEach((square) => {
     square.classList.remove('validMove')
-    square.replaceWith(square.cloneNode(true))
+    const moveIndex = parseInt(square.id)
+    const handler = eventHandlers.moveHandlers[moveIndex]
+    if (handler) {
+      square.removeEventListener('click', handler)
+      delete eventHandlers.moveHandlers[moveIndex]
+    }
   })
 
-  selectedPiece = null
+  if (!continuedJump) {
+    selectedPiece = null
+  }
 }
 
 // Checks if any piece has valid moves
@@ -228,7 +298,12 @@ const hasValidMoves = () => {
 
   board.forEach((piece, index) => {
     if (piece && piece.color === currentPlayer) {
+      // Temporarily save and reset continuedJump to check all possible moves
+      const savedContinuedJump = continuedJump
+      continuedJump = false
       const moves = findValidMoves(index, piece)
+      continuedJump = savedContinuedJump
+
       if (moves.length > 0) {
         hasMoves = true
       }
@@ -301,31 +376,56 @@ const freezeBoard = () => {
 
 // Updates click handlers
 const resetListeners = () => {
+  // Remove existing piece click handlers
   document.querySelectorAll('.sqr').forEach((square) => {
-    const clone = square.cloneNode(true)
-    square.replaceWith(clone)
+    const index = parseInt(square.id)
+    const handler = eventHandlers.pieceHandlers[index]
+    if (handler) {
+      square.removeEventListener('click', handler)
+      delete eventHandlers.pieceHandlers[index]
+    }
   })
   addClickHandlers()
 }
 
 // Sets up piece click handlers
 const addClickHandlers = () => {
-  board.forEach((piece, index) => {
-    if (piece && piece.color === currentPlayer) {
-      const square = document.getElementById(index)
-      square.addEventListener('click', () => selectPiece(index))
+  if (continuedJump && selectedPiece !== null) {
+    const square = document.getElementById(selectedPiece)
+    function handlePieceClick() {
+      selectPiece(selectedPiece)
     }
-  })
+    eventHandlers.pieceHandlers[selectedPiece] = handlePieceClick
+    square.addEventListener('click', handlePieceClick)
+  } else {
+    board.forEach((piece, index) => {
+      if (piece && piece.color === currentPlayer) {
+        const square = document.getElementById(index)
+        function handlePieceClick() {
+          selectPiece(index)
+        }
+        eventHandlers.pieceHandlers[index] = handlePieceClick
+        square.addEventListener('click', handlePieceClick)
+      }
+    })
+  }
 }
 
 // Handles piece selection
 const selectPiece = (index) => {
+  if (continuedJump && index !== selectedPiece) {
+    return
+  }
+
   if (selectedPiece === index) {
     clearSelection()
+    return
   }
+
   if (selectedPiece !== null) {
     clearSelection()
   }
+
   selectedPiece = index
   const square = document.getElementById(index)
   square.classList.add('selected')
@@ -347,6 +447,7 @@ restartEle.addEventListener('click', () => {
   board = Array(boardSize * boardSize).fill(null)
   selectedPiece = null
   currentPlayer = 'White'
+  continuedJump = false
   boardEle.innerHTML = ''
   createBoard()
   setupBoard()

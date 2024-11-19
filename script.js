@@ -4,13 +4,9 @@ const whitePiece = 'White'
 const blackPiece = 'Black'
 const normalPiece = 'normal'
 const kingPiece = 'king'
-const eventHandlers = {
-  moveHandlers: {},
-  pieceHandlers: {}
-}
 
 /*---------- Variables (state) ---------*/
-let currentPlayer = 'White'
+let currentPlayer = whitePiece
 let board = Array(boardSize * boardSize).fill(null)
 let selectedPiece = null
 let continuedJump = false
@@ -19,6 +15,13 @@ let continuedJump = false
 const boardEle = document.getElementById('board')
 const restartEle = document.getElementById('restart')
 const messageEle = document.getElementById('Message')
+const instructionsToggle = document.getElementById('instructions-toggle')
+const instructions = document.getElementById('instructions')
+
+const eventHandlers = {
+  moveHandlers: {},
+  pieceHandlers: {}
+}
 
 /*-------------- Functions -------------*/
 // Creates the checkerboard pattern
@@ -30,12 +33,7 @@ const createBoard = () => {
     const row = Math.floor(i / boardSize)
     const col = i % boardSize
 
-    if ((row + col) % 2 === 0) {
-      square.classList.add('white')
-    } else {
-      square.classList.add('black')
-    }
-
+    square.classList.add((row + col) % 2 === 0 ? 'white' : 'black')
     square.id = i
     boardEle.appendChild(square)
   }
@@ -83,6 +81,7 @@ const renderBoard = () => {
       } else if (piece.color === whitePiece) {
         pieceElement.classList.add('whitePiece')
       }
+
       if (piece.type === kingPiece) {
         pieceElement.classList.add('king')
       }
@@ -153,7 +152,6 @@ const checkForJumps = () => {
   for (let i = 0; i < board.length; i++) {
     const piece = board[i]
     if (piece && piece.color === currentPlayer) {
-      // Temporarily save and reset continuedJump to check for jumps
       const savedContinuedJump = continuedJump
       continuedJump = false
       const moves = findValidMoves(i, piece)
@@ -173,6 +171,7 @@ const checkForJumps = () => {
   return false
 }
 
+// Checks if a move is a jump
 const isJumpMove = (fromIndex, toIndex) => {
   const delta = toIndex - fromIndex
   const possibleDeltas = [
@@ -203,6 +202,7 @@ const showMoves = (index) => {
 // Handles piece movement
 const movePiece = (toIndex) => {
   const isJump = isJumpMove(selectedPiece, toIndex)
+  let moreJumps = false
 
   if (isJump) {
     capturePiece(selectedPiece, toIndex)
@@ -214,11 +214,13 @@ const movePiece = (toIndex) => {
 
   clearSelection()
 
-  const moreJumps = isJump
-    ? findValidMoves(toIndex, board[toIndex]).some((move) =>
-        isJumpMove(toIndex, move)
-      )
-    : false
+  checkForKing(toIndex)
+
+  if (isJump) {
+    moreJumps = findValidMoves(toIndex, board[toIndex]).some((move) =>
+      isJumpMove(toIndex, move)
+    )
+  }
 
   renderBoard()
 
@@ -255,10 +257,12 @@ const capturePiece = (fromIndex, toIndex) => {
 const checkForKing = (index) => {
   const piece = board[index]
   if (
-    (piece.color === blackPiece && Math.floor(index / boardSize) === 7) ||
-    (piece.color === whitePiece && Math.floor(index / boardSize) === 0)
+    piece &&
+    ((piece.color === blackPiece && Math.floor(index / boardSize) === 7) ||
+      (piece.color === whitePiece && Math.floor(index / boardSize) === 0))
   ) {
     piece.type = kingPiece
+    renderBoard()
   }
 }
 
@@ -298,7 +302,6 @@ const hasValidMoves = () => {
 
   board.forEach((piece, index) => {
     if (piece && piece.color === currentPlayer) {
-      // Temporarily save and reset continuedJump to check all possible moves
       const savedContinuedJump = continuedJump
       continuedJump = false
       const moves = findValidMoves(index, piece)
@@ -314,17 +317,28 @@ const hasValidMoves = () => {
 
 // Changes active player
 const switchPlayer = () => {
-  if (currentPlayer === 'White') {
-    currentPlayer = 'Black'
+  if (currentPlayer === whitePiece) {
+    currentPlayer = blackPiece
   } else {
-    currentPlayer = 'White'
+    currentPlayer = whitePiece
   }
   updateMessage()
 }
 
 // Updates game message
 const updateMessage = (message = null) => {
-  messageEle.textContent = message || `${currentPlayer}'s Turn`
+  let icon
+  if (currentPlayer === whitePiece) {
+    icon = '⚪' // White circle
+  } else {
+    icon = '⚫' // Black circle
+  }
+
+  messageEle.innerHTML = `
+    <span>
+      ${icon} ${message || `${currentPlayer}'s Turn`} ${icon}
+    </span>
+  `
 }
 
 // Checks for winner
@@ -355,9 +369,9 @@ const checkWinner = () => {
   if (!hasValidMoves()) {
     let winner
     if (currentPlayer === whitePiece) {
-      winner = 'Black'
+      winner = blackPiece
     } else {
-      winner = 'White'
+      winner = whitePiece
     }
     updateMessage(`${winner} Wins! - No moves left for ${currentPlayer}`)
     freezeBoard()
@@ -376,7 +390,6 @@ const freezeBoard = () => {
 
 // Updates click handlers
 const resetListeners = () => {
-  // Remove existing piece click handlers
   document.querySelectorAll('.sqr').forEach((square) => {
     const index = parseInt(square.id)
     const handler = eventHandlers.pieceHandlers[index]
@@ -446,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
 restartEle.addEventListener('click', () => {
   board = Array(boardSize * boardSize).fill(null)
   selectedPiece = null
-  currentPlayer = 'White'
+  currentPlayer = whitePiece
   continuedJump = false
   boardEle.innerHTML = ''
   createBoard()
@@ -454,4 +467,16 @@ restartEle.addEventListener('click', () => {
   renderBoard()
   updateMessage()
   resetListeners()
+})
+
+// Instructions
+instructionsToggle.addEventListener('click', () => {
+  if (
+    instructions.style.display === 'none' ||
+    instructions.style.display === ''
+  ) {
+    instructions.style.display = 'block'
+  } else {
+    instructions.style.display = 'none'
+  }
 })

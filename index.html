@@ -5,15 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
     <script defer src="script.js"></script>
-    <title>Checkers</title>
+    <title>Minimalist Checkers</title>
   </head>
   <body>
+    <!-- Game Header -->
     <h1>Checkers</h1>
-    <!-- <p id="instructions">Click on a piece to select it, then click on a highlighted square to move.</p> -->
-    <h2 id="Message">Message</h2>
 
-    <section id="board"></section>
+    <!-- Game Container -->
+    <div class="game-container">
+      <!-- Game Message -->
+      <div id="Message" class="game-message">White's Turn</div>
 
-    <button id="restart">Restart</button>
+      <!-- Checkers Board -->
+      <div id="board" class="board"></div>
+
+      <!-- Restart Button -->
+      <button id="restart" class="restart-btn">Restart Game</button>
+
+      <!-- Instructions Section -->
+      <div class="instructions-container">
+        <button id="instructions-toggle" class="instructions-btn">
+          Game Instructions
+        </button>
+        <div id="instructions" class="instructions hidden">
+          <h2>How to Play</h2>
+          <ul>
+            <li>
+              <strong>Objective:</strong> Capture all opponent's pieces or block
+              their moves.
+            </li>
+            <li>
+              <strong>Movement:</strong> Regular pieces move diagonally forward;
+              Kings can move diagonally in any direction.
+            </li>
+            <li>
+              <strong>Capturing:</strong> Jump over an opponent's piece to
+              capture it. Multiple captures are allowed in one turn.
+            </li>
+            <li>
+              <strong>Winning:</strong> Capture all opponent's pieces or leave
+              them with no legal moves.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

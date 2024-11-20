@@ -30,8 +30,8 @@ h1 {
 /* Styling for Game Message */
 .game-message {
   font-size: 2rem;
-  color: #ffffff; /* Glowing text color */
-  text-shadow: 0 0 5px #ffffff, 0 0 10px #ffffff;
+  color: #fff;
+  text-shadow: 0 0 5px #fff, 0 0 10px #fff;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -45,6 +45,10 @@ h1 {
   justify-content: center;
 }
 
+.message-transition {
+  animation: messageSlide 0.3s ease-out;
+}
+
 /* Board Styling */
 #board {
   display: grid;
@@ -54,6 +58,7 @@ h1 {
   height: 500px;
   border: 2px solid #555;
   background-color: #1a1a1a;
+  overflow: visible;
 }
 
 .sqr {
@@ -62,6 +67,7 @@ h1 {
   justify-content: center;
   position: relative;
   border: 1px solid #666;
+  overflow: visible;
 }
 
 .sqr.black {
@@ -72,6 +78,15 @@ h1 {
   background-color: #333333;
 }
 
+.board-reset-left {
+  animation: boardReset 0.5s ease-out;
+  --angle: -5deg;
+}
+
+.board-reset-right {
+  animation: boardReset 0.5s ease-out;
+  --angle: 5deg;
+}
 /* Piece Styling */
 .blackPiece,
 .whitePiece {
@@ -83,39 +98,45 @@ h1 {
   justify-content: center;
   position: relative;
   border: 2px solid #777;
-  transition: transform 0.2s;
+  transition: transform 0.3s ease-out;
   box-sizing: border-box;
   overflow: hidden;
 }
 
 .blackPiece {
   background-color: #111;
-  border: 2px solid #888;
+  border-color: #888;
 }
 
 .whitePiece {
-  background-color: #eee;
-  border: 2px solid #aaa;
+  background-color: #ddd;
+  border-color: #aaa;
 }
 
 .blackPiece.king::before,
 .whitePiece.king::before {
   content: '♔';
-  color: #ff00ff;
+  color: #0099ff;
   font-size: 200%;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  text-shadow: 0 0 5px #0099ff;
 }
 
-/* Selection Highlighting */
+.king-promotion {
+  animation: kingPromotion 0.6s ease-in-out;
+}
+
+/* Highlighting */
 .selected {
   position: relative;
   border: 3px solid #00ffc6;
   border-radius: 10px;
   box-shadow: 0 0 15px #00ffc6;
-  z-index: 0;
+  animation: pulse 1.5s infinite;
+  z-index: 1;
 }
 
 .selected::before {
@@ -130,12 +151,18 @@ h1 {
   border-radius: 10px;
 }
 
-/* Valid Move Highlighting */
+.sqr:not(.validMove) .blackPiece:hover,
+.sqr:not(.validMove) .whitePiece:hover {
+  transform: scale(1.1);
+  cursor: pointer;
+}
+
 .validMove {
   position: relative;
-  border: 2px solid #00b3ff;
+  border: 2px solid #0099ff;
   border-radius: 10px;
-  z-index: 0;
+  z-index: 1;
+  animation: validMoveGlow 1.5s ease-in-out infinite;
 }
 
 .validMove::before {
@@ -145,40 +172,55 @@ h1 {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 179, 255, 0.4);
+  background-color: rgba(0, 153, 255, 0.3);
   z-index: -1;
   border-radius: 10px;
+  transition: background-color 0.3s ease;
 }
 
-/* Button Styling */
-.restart-btn {
+/* Buttons */
+.restart-btn,
+.instructions-btn {
   padding: 10px 20px;
-  background-color: #333333;
-  color: #fff;
-  border: 1px solid #555;
   border-radius: 5px;
+  color: #fff;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    background-color 0.3s ease;
+}
+
+.restart-btn {
+  background-color: #333333;
+  border: 1px solid #555;
+}
+
+.instructions-btn {
+  padding: 10px 20px;
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  font-size: 1rem;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.restart-btn:hover,
+.instructions-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(0, 255, 198, 0.3);
 }
 
 .restart-btn:hover {
   background-color: #444444;
 }
 
-.instructions-btn {
-  padding: 10px 20px;
-  background-color: #2a2a2a;
-  color: #fff;
-  border: 1px solid #444;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
 .instructions-btn:hover {
+  transform: scale(1.05);
   background-color: #333;
-  color: #00ffc6;
+  box-shadow: 0 0 15px rgba(0, 255, 198, 0.2);
 }
 
 /* Instructions Styling */
@@ -186,6 +228,7 @@ h1 {
   margin-top: 20px;
   width: 100%;
   text-align: center;
+  overflow: hidden;
 }
 
 .instructions {
@@ -195,7 +238,15 @@ h1 {
   border-radius: 5px;
   background-color: #1c1c1c;
   color: #fff;
-  display: none;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform-origin: top;
+  transform: scaleY(0);
+  transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .instructions h2 {
@@ -215,4 +266,155 @@ h1 {
 .instructions li {
   margin-bottom: 12px;
   font-size: 1rem;
+}
+
+.instructions.show {
+  max-height: 500px;
+  opacity: 1;
+  transform: scaleY(1);
+  padding: 15px;
+}
+
+.instructions.hide {
+  animation: slideUp 0.3s ease-out;
+  animation-fill-mode: forwards;
+}
+
+/* Win Screen */
+.win-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10;
+  animation: winScreenFadeIn 0.8s ease-out forwards;
+}
+
+.win-content {
+  text-align: center;
+  transform: translateY(20px);
+  opacity: 0;
+  animation: winContentSlideIn 0.6s ease-out 0.3s forwards;
+}
+
+.win-text {
+  font-size: 3rem;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.win-piece {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin: 0 10px;
+  animation: winPiecePulse 2s ease-in-out infinite;
+}
+
+.board-container {
+  position: relative;
+  width: 502px;
+  height: 502px;
+  overflow: hidden;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 5px rgba(0, 255, 198, 0.5);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(0, 255, 198, 0.8);
+  }
+}
+
+@keyframes validMoveGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(0, 153, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(0, 153, 255, 0.8);
+  }
+}
+
+@keyframes boardReset {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.9) rotate(var(--angle, 0deg));
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes messageSlide {
+  0% {
+    opacity: 0.5;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes kingPromotion {
+  0% {
+    transform: scale(1);
+    box-shadow: none;
+  }
+  50% {
+    transform: scale(1.4);
+    box-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00, 0 0 60px #00ff00;
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: none;
+  }
+}
+
+@keyframes winScreenFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@keyframes winContentSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes winPiecePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(0, 153, 255, 0);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(0, 153, 255, 0.5);
+  }
 }

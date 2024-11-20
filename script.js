@@ -10,6 +10,7 @@ let currentPlayer = whitePiece
 let board = Array(boardSize * boardSize).fill(null)
 let selectedPiece = null
 let continuedJump = false
+let resetAnimationDirection = 'left'
 
 /*----- Cached Element References  -----*/
 const boardEle = document.getElementById('board')
@@ -244,6 +245,7 @@ const movePiece = (toIndex) => {
 }
 
 // Removes captured piece
+// Update the capturePiece function in script.js
 const capturePiece = (fromIndex, toIndex) => {
   const capturedSpot = (fromIndex + toIndex) / 2
   if (board[capturedSpot] && board[capturedSpot].color !== currentPlayer) {
@@ -326,19 +328,51 @@ const switchPlayer = () => {
 }
 
 // Updates game message
-const updateMessage = (message = null) => {
+const updateMessage = (message = null, color = currentPlayer) => {
   let icon
-  if (currentPlayer === whitePiece) {
-    icon = '⚪' // White circle
+  if (color === whitePiece) {
+    icon = '⚪'
   } else {
-    icon = '⚫' // Black circle
+    icon = '⚫'
   }
 
+  messageEle.classList.add('message-transition')
+
   messageEle.innerHTML = `
-    <span>
-      ${icon} ${message || `${currentPlayer}'s Turn`} ${icon}
-    </span>
+  <span>
+    ${icon} ${message || `${color}'s Turn`} ${icon}
+  </span>
+`
+  setTimeout(() => {
+    messageEle.classList.remove('message-transition')
+  }, 300)
+}
+
+// Creates Win Screen
+const createWinScreen = (winner) => {
+  const winScreen = document.createElement('div')
+  winScreen.className = 'win-screen'
+
+  const winContent = document.createElement('div')
+  winContent.className = 'win-content'
+
+  const winText = document.createElement('div')
+  winText.className = 'win-text'
+  winText.textContent = `${winner} Wins!`
+
+  const piece = document.createElement('div')
+  piece.className = 'win-piece'
+  piece.style.cssText = `
+      background-color: ${winner === 'White' ? '#ddd' : '#111'};
+      border: 2px solid ${winner === 'White' ? '#aaa' : '#888'};
   `
+
+  winContent.appendChild(winText)
+  winContent.appendChild(piece)
+  winScreen.appendChild(winContent)
+
+  const boardContainer = document.querySelector('.board-container')
+  boardContainer.appendChild(winScreen)
 }
 
 // Checks for winner
@@ -357,24 +391,22 @@ const checkWinner = () => {
   })
 
   if (whiteCount === 0) {
-    updateMessage('Black Wins!')
+    updateMessage('Black Wins!', blackPiece)
     freezeBoard()
+    createWinScreen('Black')
     return true
   } else if (blackCount === 0) {
-    updateMessage('White Wins!')
+    updateMessage('White Wins!', whitePiece)
     freezeBoard()
+    createWinScreen('White')
     return true
   }
 
   if (!hasValidMoves()) {
-    let winner
-    if (currentPlayer === whitePiece) {
-      winner = blackPiece
-    } else {
-      winner = whitePiece
-    }
-    updateMessage(`${winner} Wins! - No moves left for ${currentPlayer}`)
+    let winner = currentPlayer === whitePiece ? blackPiece : whitePiece
+    updateMessage(`${winner} Wins!`, winner)
     freezeBoard()
+    createWinScreen(winner)
     return true
   }
   return false
@@ -462,21 +494,29 @@ restartEle.addEventListener('click', () => {
   currentPlayer = whitePiece
   continuedJump = false
   boardEle.innerHTML = ''
+
+  const animationClass =
+    resetAnimationDirection === 'left'
+      ? 'board-reset-left'
+      : 'board-reset-right'
+
+  boardEle.classList.add(animationClass)
+
   createBoard()
   setupBoard()
   renderBoard()
   updateMessage()
   resetListeners()
+
+  setTimeout(() => {
+    boardEle.classList.remove(animationClass)
+  }, 500)
+
+  resetAnimationDirection =
+    resetAnimationDirection === 'left' ? 'right' : 'left'
 })
 
 // Instructions
 instructionsToggle.addEventListener('click', () => {
-  if (
-    instructions.style.display === 'none' ||
-    instructions.style.display === ''
-  ) {
-    instructions.style.display = 'block'
-  } else {
-    instructions.style.display = 'none'
-  }
+  instructions.classList.toggle('show')
 })

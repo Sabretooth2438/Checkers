@@ -489,6 +489,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Reset game
 restartEle.addEventListener('click', () => {
+  const winScreen = document.querySelector('.win-screen')
+  if (winScreen) {
+    winScreen.remove()
+  }
+
   board = Array(boardSize * boardSize).fill(null)
   selectedPiece = null
   currentPlayer = whitePiece

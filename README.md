@@ -12,7 +12,7 @@ I chose this project because of my personal connection to the game, as I used to
 
 ## Getting Started
 
-- [Play the Game Here](https://sabretooth2438.github.io/Checkers/)
+- [Play the Game Here](https://minimalistcheckers.surge.sh/)
 
 ### Instructions
 

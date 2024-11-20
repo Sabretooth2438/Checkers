@@ -34,7 +34,12 @@ const createBoard = () => {
     const row = Math.floor(i / boardSize)
     const col = i % boardSize
 
-    square.classList.add((row + col) % 2 === 0 ? 'white' : 'black')
+    if ((row + col) % 2 === 0) {
+      square.classList.add('white')
+    } else {
+      square.classList.add('black')
+    }
+
     square.id = i
     boardEle.appendChild(square)
   }
@@ -245,7 +250,6 @@ const movePiece = (toIndex) => {
 }
 
 // Removes captured piece
-// Update the capturePiece function in script.js
 const capturePiece = (fromIndex, toIndex) => {
   const capturedSpot = (fromIndex + toIndex) / 2
   if (board[capturedSpot] && board[capturedSpot].color !== currentPlayer) {
@@ -403,7 +407,12 @@ const checkWinner = () => {
   }
 
   if (!hasValidMoves()) {
-    let winner = currentPlayer === whitePiece ? blackPiece : whitePiece
+    let winner
+    if (currentPlayer === whitePiece) {
+      winner = blackPiece
+    } else {
+      winner = whitePiece
+    }
     updateMessage(`${winner} Wins!`, winner)
     freezeBoard()
     createWinScreen(winner)
@@ -500,10 +509,12 @@ restartEle.addEventListener('click', () => {
   continuedJump = false
   boardEle.innerHTML = ''
 
-  const animationClass =
-    resetAnimationDirection === 'left'
-      ? 'board-reset-left'
-      : 'board-reset-right'
+  let animationClass
+  if (resetAnimationDirection === 'left') {
+    animationClass = 'board-reset-left'
+  } else {
+    animationClass = 'board-reset-right'
+  }
 
   boardEle.classList.add(animationClass)
 
@@ -517,8 +528,11 @@ restartEle.addEventListener('click', () => {
     boardEle.classList.remove(animationClass)
   }, 500)
 
-  resetAnimationDirection =
-    resetAnimationDirection === 'left' ? 'right' : 'left'
+  if (resetAnimationDirection === 'left') {
+    resetAnimationDirection = 'right'
+  } else {
+    resetAnimationDirection = 'left'
+  }
 })
 
 // Instructions
